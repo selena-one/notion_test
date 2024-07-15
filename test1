@@ -1,0 +1,47 @@
+pip install requests beautifulsoup4 schedule
+import requests
+from bs4 import BeautifulSoup
+import schedule
+import time
+from datetime import datetime, timedelta
+
+NOTION_URL = 'https://www.notion.so/coin-side/2a567dd80c444955b811163b62b17443?v=abb2351246124c8e9f9b0e0b66c0135e&pvs=4'
+
+def get_cards_from_yesterday():
+    response = requests.get(NOTION_URL)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    # Здесь нужно проанализировать структуру HTML и выбрать правильные теги и классы для извлечения данных
+    # Это примерный код, поскольку я не знаю структуру страницы Notion
+    cards = soup.find_all('div', class_='notion-collection-card')
+
+    yesterday = datetime.now() - timedelta(days=1)
+    yesterday_str = yesterday.strftime('%Y-%m-%d')
+    yesterday_cards = []
+
+    for card in cards:
+        # Предполагаем, что дата находится в элементе с классом 'date-class', измените по необходимости
+        date_element = card.find('div', class_='date-class')
+        if date_element and yesterday_str in date_element.text:
+            yesterday_cards.append(card.text.strip())
+
+    return yesterday_cards
+
+def job():
+    cards = get_cards_from_yesterday()
+    if cards:
+        print(f"Cards from yesterday ({(datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')}):")
+        for card in cards:
+            print(card)
+    else:
+        print("No cards found for yesterday.")
+
+# Планируем выполнение задачи каждый день в 12:00 по московскому времени
+schedule.every().day.at("12:00").do(job)
+
+# Бесконечный цикл для выполнения задач по расписанию
+while True:
+    schedule.run_pending()
+    time.sleep(1)
